@@ -18,7 +18,8 @@ class ImageAnalysisAgent:
         api_key: Optional[str] = None,
         model: str = "gpt-4o",
         check_interval: int = 5,
-        supported_formats: List[str] = None
+        supported_formats: List[str] = None,
+        ollama_base_url: str = "http://localhost:11434"
     ):
         self.watch_directory = Path(watch_directory)
         self.output_directory = Path(output_directory)
@@ -26,12 +27,28 @@ class ImageAnalysisAgent:
         self.check_interval = check_interval
         self.processed_images = set()
         self.supported_formats = supported_formats or ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
-        
+        self.ollama_base_url = ollama_base_url
+
         self.watch_directory.mkdir(parents=True, exist_ok=True)
         self.output_directory.mkdir(parents=True, exist_ok=True)
-        
-        self.client = openai.OpenAI(api_key=api_key or os.getenv('OPENAI_API_KEY'))
-        
+
+        # Detect provider by model prefix. If model starts with 'ollama/' use Ollama (local LLM),
+        # otherwise default to OpenAI client.
+        self.use_ollama = model.startswith('ollama/')
+
+        if self.use_ollama:
+            # For Ollama, we route requests to the Ollama server via the OpenAI-compatible shim.
+            # Use a sentinel API key value since the shim may not require a real key.
+            self.client = openai.OpenAI(
+                base_url=f"{ollama_base_url}/v1",
+                api_key="ollama"
+            )
+            # Strip the provider prefix from the model name so downstream calls use the actual model id.
+            self.model = model.replace('ollama/', '')
+        else:
+            # Default to OpenAI
+            self.client = openai.OpenAI(api_key=api_key or os.getenv('OPENAI_API_KEY'))
+
         self.processed_log = self.output_directory / 'processed_images.json'
         self._load_processed_images()
 
@@ -109,7 +126,9 @@ Be thorough and specific. Provide actionable insights about what has been done o
             )
             
             analysis = response.choices[0].message.content
-            
+
+            tokens_used = response.usage.total_tokens if hasattr(response, 'usage') and response.usage else 0
+
             return {
                 'success': True,
                 'image_path': str(image_path),
@@ -117,9 +136,10 @@ Be thorough and specific. Provide actionable insights about what has been done o
                 'timestamp': datetime.now().isoformat(),
                 'analysis': analysis,
                 'model': self.model,
-                'tokens_used': response.usage.total_tokens
+                'tokens_used': tokens_used,
+                'provider': 'ollama' if self.use_ollama else 'openai'
             }
-            
+
         except Exception as e:
             print(f"Error analyzing image {image_path.name}: {str(e)}")
             return {

@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-An autonomous AI agent that continuously monitors a directory for new images and generates extensive, detailed analysis and descriptions using GPT-4 Vision.
+An autonomous AI agent that continuously monitors a directory for new images and generates extensive, detailed analysis and descriptions using GPT-4 Vision or local LLMs via Ollama.
 
 ## 🌟 Features
 
@@ -13,8 +13,11 @@ An autonomous AI agent that continuously monitors a directory for new images and
 - **Persistent Tracking**: Remembers processed images
 - **Dual Output**: Human-readable text + machine-readable JSON
 - **Flexible Modes**: Continuous or single-run processing
+- **Local & Cloud LLMs**: Support for OpenAI GPT-4 Vision and local models via Ollama
 
 ## 📋 Quick Start
+
+### Option 1: Using OpenAI (Cloud)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/image-analysis-agent.git
@@ -26,6 +29,21 @@ Edit `.env` and add your OpenAI API key, then:
 
 ```bash
 python run.py
+```
+
+### Option 2: Using Ollama (Local - Free)
+
+1. Install Ollama from https://ollama.ai
+2. Pull a vision model:
+```bash
+ollama pull llava
+# or
+ollama pull llama3.2-vision
+```
+
+3. Run the agent:
+```bash
+python run.py --model ollama/llava
 ```
 
 See [Quick Start Guide](docs/QUICKSTART.md) for detailed instructions.
@@ -53,19 +71,50 @@ image-analysis-agent/
 
 ## 🚀 Usage
 
-### Basic Usage
+### Using OpenAI (Cloud)
 ```bash
 python run.py --watch ./images --output ./analysis
 ```
 
+### Using Ollama (Local)
+```bash
+# Make sure Ollama is running and you have pulled a vision model
+python run.py --model ollama/llava --watch ./images --output ./analysis
+```
+
 ### Single Run Mode
 ```bash
+# OpenAI
 python run.py --watch ./images --output ./analysis --once
+
+# Ollama
+python run.py --model ollama/llava --watch ./images --output ./analysis --once
 ```
 
 ### Custom Configuration
 ```bash
 python run.py --watch ./screenshots --output ./reports --interval 10 --model gpt-4o
+```
+
+### Programmatic Usage
+```python
+from src.agent import ImageAnalysisAgent
+
+# Using OpenAI
+agent = ImageAnalysisAgent(
+    watch_directory="./images",
+    output_directory="./analysis",
+    model="gpt-4o"
+)
+
+# Using Ollama
+agent = ImageAnalysisAgent(
+    watch_directory="./images",
+    output_directory="./analysis",
+    model="ollama/llava"
+)
+
+agent.run_continuous()
 ```
 
 ### Programmatic Usage
@@ -100,8 +149,43 @@ Analysis includes:
 ## 🔧 Requirements
 
 - Python 3.8+
-- OpenAI API key with GPT-4 Vision access
+- **For OpenAI**: OpenAI API key with GPT-4 Vision access
+- **For Ollama**: Ollama installed locally (free, no API key needed)
 - Dependencies: `openai`, `watchdog`, `pillow`, `python-dotenv`
+
+## 🎯 Supported Models
+
+### OpenAI Models
+- `gpt-4o` (recommended)
+- `gpt-4-vision-preview`
+- `gpt-4-turbo`
+
+### Ollama Models (Local)
+- `ollama/llava` (recommended for general use)
+- `ollama/llama3.2-vision` (latest Llama vision model)
+- `ollama/bakllava` (alternative vision model)
+
+To use Ollama models, prefix with `ollama/` (e.g., `--model ollama/llava`)
+
+## 💰 Cost Comparison
+
+### OpenAI GPT-4 Vision
+- **Cost**: ~$0.01 per image (varies by detail level)
+- **Speed**: Fast (network dependent)
+- **Quality**: Excellent
+- **Setup**: Easy (just API key)
+- **Hardware**: None required
+
+### Ollama (Local)
+- **Cost**: $0 (completely free)
+- **Speed**: Fast (no network latency)
+- **Quality**: Very good (model dependent)
+- **Setup**: Moderate (install + download model)
+- **Hardware**: 8GB+ RAM required
+
+**Example**: Analyzing 1000 images
+- OpenAI: ~$10
+- Ollama: $0
 
 ## 📖 Documentation
 
@@ -119,8 +203,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-Built with OpenAI's GPT-4 Vision API for advanced image understanding.
+Built with OpenAI's GPT-4 Vision API and Ollama for advanced image understanding.
 
 ---
 
-**Note**: This project requires an OpenAI API key and will incur costs based on usage. Monitor your API usage dashboard.
+**Note**:
+- **OpenAI**: Requires an API key and will incur costs based on usage. Monitor your API usage dashboard.
+- **Ollama**: Free and runs locally. No API costs, but requires sufficient hardware (8GB+ RAM recommended).

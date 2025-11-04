@@ -24,17 +24,81 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
+## Configuration
+
+### For OpenAI (Cloud)
+
 Edit `.env` and add your OpenAI API key:
 ```
 OPENAI_API_KEY=sk-your-key-here
 ```
 
+### For Ollama (Local - Free)
+
+1. **Install Ollama**
+   - Visit https://ollama.ai and download for your OS
+   - Or use package managers:
+     ```bash
+     # macOS
+     brew install ollama
+
+     # Linux
+     curl -fsSL https://ollama.ai/install.sh | sh
+     ```
+
+2. **Pull a vision model**
+   ```bash
+   ollama pull llava
+   # or for the latest Llama vision model
+   ollama pull llama3.2-vision
+   ```
+
+3. **Verify Ollama is running**
+   ```bash
+   ollama list
+   ```
+
+   If Ollama isn't running, start it:
+   ```bash
+   ollama serve
+   ```
+
 ## Running the Agent
 
-### Continuous Monitoring (Default)
+### Using OpenAI
+
+#### Continuous Monitoring (Default)
 ```bash
-python agent.py
+python run.py
 ```
+
+#### Process Once and Exit
+```bash
+python run.py --once
+```
+
+### Using Ollama (Local)
+
+#### Continuous Monitoring
+```bash
+python run.py --model ollama/llava
+```
+
+#### Process Once and Exit
+```bash
+python run.py --model ollama/llava --once
+```
+
+#### Using Different Ollama Models
+```bash
+# Llama 3.2 Vision
+python run.py --model ollama/llama3.2-vision
+
+# BakLLaVA
+python run.py --model ollama/bakllava
+```
+
+### Common Options
 
 This will:
 - Watch `./input_images` for new images
@@ -42,19 +106,22 @@ This will:
 - Save results to `./analysis_output`
 - Keep running until you press Ctrl+C
 
-### Process Once and Exit
-```bash
-python agent.py --once
-```
-
 ### Custom Directories
 ```bash
-python agent.py --watch /path/to/screenshots --output /path/to/reports
+# OpenAI
+python run.py --watch /path/to/screenshots --output /path/to/reports
+
+# Ollama
+python run.py --model ollama/llava --watch /path/to/screenshots --output /path/to/reports
 ```
 
 ### Adjust Check Interval
 ```bash
-python agent.py --interval 10
+# OpenAI
+python run.py --interval 10
+
+# Ollama
+python run.py --model ollama/llava --interval 10
 ```
 
 ## Testing the Agent
